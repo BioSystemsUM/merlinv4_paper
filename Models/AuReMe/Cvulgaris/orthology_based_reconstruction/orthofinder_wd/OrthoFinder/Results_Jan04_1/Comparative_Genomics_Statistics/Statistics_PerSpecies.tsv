@@ -1,0 +1,100 @@
+	Cvulgaris	creidhartii
+Number of genes	7100	16897
+Number of genes in orthogroups	4812	5142
+Number of unassigned genes	2288	11755
+Percentage of genes in orthogroups	67.8	30.4
+Percentage of unassigned genes	32.2	69.6
+Number of orthogroups containing species	4331	4335
+Percentage of orthogroups containing species	99.9	100.0
+Number of species-specific orthogroups	2	6
+Number of genes in species-specific orthogroups	5	20
+Percentage of genes in species-specific orthogroups	0.1	0.1
+
+
+Number of genes per-species in orthogroup	Number of orthogroups	Number of orthogroups
+'0	6	2
+'1	4032	3855
+'2	226	363
+'3	43	71
+'4	12	24
+'5	3	7
+'6	4	3
+'7	4	2
+'8	1	0
+'9	2	2
+'10	1	0
+11-15	2	3
+16-20	0	0
+21-50	1	5
+51-100	0	0
+101-150	0	0
+151-200	0	0
+201-500	0	0
+501-1000	0	0
+'1001+	0	0
+
+Number of genes per-species in orthogroup	Percentage of orthogroups	Percentage of orthogroups
+'0	0.1	0.0
+'1	93.0	88.9
+'2	5.2	8.4
+'3	1.0	1.6
+'4	0.3	0.6
+'5	0.1	0.2
+'6	0.1	0.1
+'7	0.1	0.0
+'8	0.0	0.0
+'9	0.0	0.0
+'10	0.0	0.0
+11-15	0.0	0.1
+16-20	0.0	0.0
+21-50	0.0	0.1
+51-100	0.0	0.0
+101-150	0.0	0.0
+151-200	0.0	0.0
+201-500	0.0	0.0
+501-1000	0.0	0.0
+'1001+	0.0	0.0
+
+Number of genes per-species in orthogroup	Number of genes	Number of genes
+'0	0	0
+'1	4032	3855
+'2	452	726
+'3	129	213
+'4	48	96
+'5	15	35
+'6	24	18
+'7	28	14
+'8	8	0
+'9	18	18
+'10	10	0
+11-15	23	40
+16-20	0	0
+21-50	25	127
+51-100	0	0
+101-150	0	0
+151-200	0	0
+201-500	0	0
+501-1000	0	0
+'1001+	0	0
+
+Number of genes per-species in orthogroup	Percentage of genes	Percentage of genes
+'0	0.0	0.0
+'1	56.8	22.8
+'2	6.4	4.3
+'3	1.8	1.3
+'4	0.7	0.6
+'5	0.2	0.2
+'6	0.3	0.1
+'7	0.4	0.1
+'8	0.1	0.0
+'9	0.3	0.1
+'10	0.1	0.0
+11-15	0.3	0.2
+16-20	0.0	0.0
+21-50	0.4	0.8
+51-100	0.0	0.0
+101-150	0.0	0.0
+151-200	0.0	0.0
+201-500	0.0	0.0
+501-1000	0.0	0.0
+'1001+	0.0	0.0

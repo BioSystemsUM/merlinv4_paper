@@ -1,0 +1,1 @@
+((creidhartii_CRv4_Au5_s9_g15796_t1:0.890215,Cvulgaris_snap_masked_Scaffold_311-abinit-gene-0.23-mRNA-1 protein AED_0.11 eAED_0.14 QI_1808|0.95|0.90|1|0.66|0.54|22|0|339:2.0882):0.0733603,creidhartii_CRv4_Au5_s16_g6233_t1:0.633219,creidhartii_CRv4_Au5_s13_g4339_t1:0.665259);

@@ -1,0 +1,1 @@
+(creidhartii_CRv4_Au5_s24_g9944_t1:0.214245,(creidhartii_CRv4_Au5_s69_g13670_t1:0.839348,(creidhartii_CRv4_Au5_s7_g14345_t1:0.487223,creidhartii_CRv4_Au5_s7_g14360_t2:0.126663)n2:0.88451)n1:0.214245)n0;

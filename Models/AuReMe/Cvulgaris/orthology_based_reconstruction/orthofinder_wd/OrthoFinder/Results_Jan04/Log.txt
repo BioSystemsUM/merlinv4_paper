@@ -1,0 +1,12 @@
+2022-01-04 12:55:18 : Started OrthoFinder version 2.3.3
+Command Line: orthofinder -f /shared/Cvulgaris/orthology_based_reconstruction/orthofinder_wd
+
+WorkingDirectory_Base: /shared/Cvulgaris/orthology_based_reconstruction/orthofinder_wd/OrthoFinder/Results_Jan04/WorkingDirectory/
+
+Species used: 
+0: Cvulgaris.faa
+1: creidhartii.faa
+
+
+ERROR: An error occurred
+ERROR: diamond makedb failed

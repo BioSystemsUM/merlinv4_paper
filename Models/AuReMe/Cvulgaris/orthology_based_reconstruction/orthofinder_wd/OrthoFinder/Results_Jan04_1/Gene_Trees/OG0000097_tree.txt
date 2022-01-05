@@ -1,0 +1,1 @@
+((creidhartii_CRv4_Au5_s12_g4018_t1:0.69182,(creidhartii_CRv4_Au5_s2_g9417_t1:0.873362,creidhartii_CRv4_Au5_s13_g4895_t1:0.532956):0.06451):0.421807,Cvulgaris_maker_Scaffold_1403-augustus-gene-0.37-mRNA-1 protein AED_0.16 eAED_0.16 QI_0|0.66|0.25|1|1|0.75|4|0|386:1.19822,creidhartii_CRv4_Au5_s13_g4895_t2:3.22186e-06);

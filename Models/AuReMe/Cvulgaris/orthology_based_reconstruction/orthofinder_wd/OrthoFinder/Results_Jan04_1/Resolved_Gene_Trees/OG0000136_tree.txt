@@ -1,0 +1,1 @@
+((creidhartii_CRv4_Au5_s12_g2795_t1:0.143492,Cvulgaris_maker_Scaffold_1094-snap-gene-0.83-mRNA-1 protein AED_0.04 eAED_0.04 QI_0|1|0.85|1|1|1|14|0|698:0.149606)n1:0.270948,(Cvulgaris_genemark_Scaffold_325-abinit-gene-0.48-mRNA-1 protein AED_0.25 eAED_0.27 QI_0|0.46|0.37|0.56|1|1|16|0|1068:0.652566,creidhartii_CRv4_Au5_s13_g4433_t1:0.42258)n2:0.270948)n0;
