@@ -1,0 +1,16 @@
+(
+(
+Ostreococcus_tauri:0.07673,
+Arabidopsis_thaliana:0.07002)
+:0.01744,
+(
+(
+Chlamydomonas_reinhardtii:0.00567,
+Volvox_carteri:0.00775)
+:0.02924,
+(
+Dunaliella_salina:0.01734,
+Haematococcus_pluvialis:0.03238)
+:0.01795)
+:0.00695,
+Chlorella_vulgaris:0.02988);

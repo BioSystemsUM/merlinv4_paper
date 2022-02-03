@@ -1,0 +1,2 @@
+Haematococcus pluvialis strain IMBI 1 18S		KU193764                	KC986379
+Dunaliella salina 18S ribosomal RNA gene, partial sequence		EF195157.1
