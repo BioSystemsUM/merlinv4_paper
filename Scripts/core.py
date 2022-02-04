@@ -173,18 +173,32 @@ class CobraModel(Model):
 
         return report
 
-    def get_reactions_other_version(self, database):
+    def get_reactions_other_version(self, database, reactions, preprocess_ids):
         convertable = {}
         not_convertable = []
 
-        for reaction in self.model.reactions:
+        for reaction_id in reactions:
 
-            reaction_id = reaction.id
+            if preprocess_ids:
 
-            if self.reconstruction_tool == ReconstructionTool.MERLIN:
-                reaction_id = str(reaction.id).split("__")[0]
-            elif self.reconstruction_tool == ReconstructionTool.MODELSEED:
-                reaction_id = str(reaction.id).split("_")[0]
+                if self.reconstruction_tool == ReconstructionTool.MERLIN:
+                    parts = reaction_id.split("__")
+                    if len(parts) > 2:
+                        reaction_id = "__".join(parts[:-1])
+                    else:
+                        reaction_id = reaction_id.split("__")[0]
+
+                elif self.reconstruction_tool == ReconstructionTool.MODELSEED:
+                    parts = reaction_id.split("_")
+                    if len(parts) > 2:
+                        reaction_id = "_".join(parts[:-1])
+                    else:
+                        reaction_id = reaction_id.split("_")[0]
+
+            # if self.reconstruction_tool == ReconstructionTool.MERLIN:
+            #     reaction_id = str(reaction_id).split("__")[0]
+            # elif self.reconstruction_tool == ReconstructionTool.MODELSEED:
+            #     reaction_id = str(reaction_id).split("_")[0]
 
             reaction_list = self.reaction_converter.convert(reaction_id, database)
             if reaction_list:

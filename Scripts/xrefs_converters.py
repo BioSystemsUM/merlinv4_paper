@@ -164,62 +164,87 @@ class MetaNetXReactionsConverter(XRefsConverter):
                 else:
                     self.source_to_external_database_map[internal_id]["seed"].append(external_id)
 
-class SeedReactionsConverter(XRefsConverter):
+class ReactionsConverter(XRefsConverter):
 
     def parse_xrefs_file(self, file_path):
         df = pd.read_csv(file_path)
 
         for i, row in df.iterrows():
             external_id = row["External ID"]
-            seed_id = row["ModelSEED ID"]
+            internal_id = row["Internal ID"]
             database = row["Source"]
-            if database == "KEGG":
-                self.external_database_to_source_map[external_id] = seed_id
 
-                if seed_id not in self.source_to_external_database_map:
-                    self.source_to_external_database_map[seed_id] = {"kegg": [external_id]}
+            if "KEGG" in database:
+                self.external_database_to_source_map[external_id] = internal_id
 
-                elif "kegg" not in self.source_to_external_database_map[seed_id]:
-                    self.source_to_external_database_map[seed_id]["kegg"] = [external_id]
+                if internal_id not in self.source_to_external_database_map:
+                    self.source_to_external_database_map[internal_id] = {"kegg": [external_id]}
 
-                else:
-                    self.source_to_external_database_map[seed_id]["kegg"].append(external_id)
-
-            elif database == "BiGG":
-                self.external_database_to_source_map[external_id] = seed_id
-
-                if seed_id not in self.source_to_external_database_map:
-                    self.source_to_external_database_map[seed_id] = {"bigg": [external_id]}
-
-                elif "bigg" not in self.source_to_external_database_map[seed_id]:
-                    self.source_to_external_database_map[seed_id]["bigg"] = [external_id]
+                elif "kegg" not in self.source_to_external_database_map[internal_id]:
+                    self.source_to_external_database_map[internal_id]["kegg"] = [external_id]
 
                 else:
-                    self.source_to_external_database_map[seed_id]["bigg"].append(external_id)
+                    self.source_to_external_database_map[internal_id]["kegg"].append(external_id)
 
-            elif database == "MetaCyc":
-                self.external_database_to_source_map[external_id] = seed_id
+            elif "BiGG" in database:
+                self.external_database_to_source_map[external_id] = internal_id
 
-                if seed_id not in self.source_to_external_database_map:
-                    self.source_to_external_database_map[seed_id] = {"metacyc": [external_id]}
+                if internal_id not in self.source_to_external_database_map:
+                    self.source_to_external_database_map[internal_id] = {"bigg": [external_id]}
 
-                elif "metacyc" not in self.source_to_external_database_map[seed_id]:
-                    self.source_to_external_database_map[seed_id]["metacyc"] = [external_id]
+                elif "bigg" not in self.source_to_external_database_map[internal_id]:
+                    self.source_to_external_database_map[internal_id]["bigg"] = [external_id]
 
                 else:
-                    self.source_to_external_database_map[seed_id]["metacyc"].append(external_id)
+                    self.source_to_external_database_map[internal_id]["bigg"].append(external_id)
 
-            # ModelSEED IDs
+            elif "MetaCyc" in database:
+                self.external_database_to_source_map[external_id] = internal_id
 
-            if seed_id not in self.external_database_to_source_map:
-                self.external_database_to_source_map[seed_id] = seed_id
+                if internal_id not in self.source_to_external_database_map:
+                    self.source_to_external_database_map[internal_id] = {"metacyc": [external_id]}
 
-            if seed_id not in self.source_to_external_database_map:
-                self.source_to_external_database_map[seed_id] = {"seed": [seed_id]}
+                elif "metacyc" not in self.source_to_external_database_map[internal_id]:
+                    self.source_to_external_database_map[internal_id]["metacyc"] = [external_id]
 
-            elif "seed" not in self.source_to_external_database_map[seed_id]:
-                self.source_to_external_database_map[seed_id]["seed"] = [seed_id]
+                else:
+                    self.source_to_external_database_map[internal_id]["metacyc"].append(external_id)
 
-            else:
-                if seed_id not in self.source_to_external_database_map[seed_id]["seed"]:
-                    self.source_to_external_database_map[seed_id]["seed"].append(seed_id)
+            elif "ModelSEED" in database:
+                self.external_database_to_source_map[external_id] = internal_id
+
+                if internal_id not in self.source_to_external_database_map:
+                    self.source_to_external_database_map[internal_id] = {"modelseed": [external_id]}
+
+                elif "modelseed" not in self.source_to_external_database_map[internal_id]:
+                    self.source_to_external_database_map[internal_id]["modelseed"] = [external_id]
+
+                else:
+                    self.source_to_external_database_map[internal_id]["modelseed"].append(external_id)
+
+            elif "MetaNetX" in database:
+                self.external_database_to_source_map[external_id] = internal_id
+
+                if internal_id not in self.source_to_external_database_map:
+                    self.source_to_external_database_map[internal_id] = {"metanetx": [external_id]}
+
+                elif "metanetx" not in self.source_to_external_database_map[internal_id]:
+                    self.source_to_external_database_map[internal_id]["metanetx"] = [external_id]
+
+                else:
+                    self.source_to_external_database_map[internal_id]["metanetx"].append(external_id)
+
+            # # ModelSEED IDs
+            #
+            # if seed_id not in self.external_database_to_source_map:
+            #     self.external_database_to_source_map[seed_id] = seed_id
+            #
+            # if seed_id not in self.source_to_external_database_map:
+            #     self.source_to_external_database_map[seed_id] = {"seed": [seed_id]}
+            #
+            # elif "seed" not in self.source_to_external_database_map[seed_id]:
+            #     self.source_to_external_database_map[seed_id]["seed"] = [seed_id]
+            #
+            # else:
+            #     if seed_id not in self.source_to_external_database_map[seed_id]["seed"]:
+            #         self.source_to_external_database_map[seed_id]["seed"].append(seed_id)

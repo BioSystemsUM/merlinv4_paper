@@ -67,9 +67,10 @@ class ReconstructionTool(Enum):
     AUREME = 2
     CARVEME = 3
     MERLIN = 4
-    MODELSEED = 5
-    PATHWAYTOOLS = 6
-    RAVEN = 7
+    MERLIN_BIT = 5
+    MODELSEED = 6
+    PATHWAYTOOLS = 7
+    RAVEN = 8
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 import matplotlib
 import seaborn
 
-from xrefs_converters import MetaNetXCompoundsConverter, MetaNetXReactionsConverter, SeedReactionsConverter
+from xrefs_converters import ReactionsConverter
 from ModelsComparisonMetrics import ModelsComparisonMetrics
 from core import read_sbml_into_cobra_model
 from utils import Utils, Type, ReconstructionTool
@@ -11,9 +11,8 @@ from Bio import SeqIO, GenBank
 
 
 def getModels(organism) -> dict:
-
     # comparison models
-    aureme_model = read_sbml_into_cobra_model(file_path="../Models/AuReMe/" + str(organism) + ".sbml",
+    aureme_model = read_sbml_into_cobra_model(file_path="../Models/AuReMe/" + str(organism) + ".xml",
                                               database_version="bigg",
                                               reconstruction_tool=ReconstructionTool.AUREME)
 
@@ -25,8 +24,8 @@ def getModels(organism) -> dict:
                                                database_version="bigg",
                                                reconstruction_tool=ReconstructionTool.CARVEME)
 
-    modelseed_model = read_sbml_into_cobra_model(file_path="../Models/ModelSEED/" + str(organism) + ".sbml",
-                                                 database_version="seed",
+    modelseed_model = read_sbml_into_cobra_model(file_path="../Models/ModelSEED/" + str(organism) + ".xml",
+                                                 database_version="modelseed",
                                                  reconstruction_tool=ReconstructionTool.MODELSEED)
 
     pathwaytools_model = read_sbml_into_cobra_model(file_path="../Models/PathwayTools/" + str(organism) + ".xml",
@@ -41,11 +40,14 @@ def getModels(organism) -> dict:
                                               database_version="kegg",
                                               reconstruction_tool=ReconstructionTool.MERLIN)
 
+    merlin_bit_model = read_sbml_into_cobra_model(file_path="../Models/Merlin-BIT/" + str(organism) + ".xml",
+                                                  database_version="bigg",
+                                                  reconstruction_tool=ReconstructionTool.MERLIN)
+
     # reference model
     reference_model = read_sbml_into_cobra_model(file_path="../Models/Manually_curated/" + str(organism) + ".xml",
                                                  database_version="bigg",
                                                  reconstruction_tool=None)
-
 
     models = {"aureme model": aureme_model,
               "autokeggrec model": autokeggrec_model,
@@ -54,57 +56,227 @@ def getModels(organism) -> dict:
               "pathwaytools model": pathwaytools_model,
               "raven model": raven_model,
               "merlin model": merlin_model,
+              "merlin bit model": merlin_bit_model,
               "reference model": reference_model
               }
 
     return models
 
-def getReactionSets(models) -> dict:
 
+def getReactionSets(models) -> dict:
     reaction_sets = {}
 
     for model_name in models.keys():
+
         reaction_set = []
         model = models[model_name]
-        #reactions_converter = MetaNetXReactionsConverter("xrefs_files/reac_xrefs_reduced.csv")
-        reactions_converter = SeedReactionsConverter("xrefs_files/reac_xrefs_reduced_from_seed_aliases.csv")
-        model.reaction_converter = reactions_converter
-        report = model.get_reactions_other_version("seed")
-        convertable_reactions = report.convertable
-        for convertable_reaction in convertable_reactions:
-            kegg_reactions = convertable_reactions[convertable_reaction]
 
-            if len(kegg_reactions) > 1:
+        all_reactions = model.model.reactions
+        reactions_to_convert = []
+
+        transport_reactions = {}
+
+        for group in model.model.groups:
+            reactions_list = []
+            if "transport" in str(group.name).lower() or "drain" in str(group.name).lower():
+                for member in group.members:
+                    reactions_list.append(member.id)
+                transport_reactions[str(group.name)] = reactions_list
+
+        for reaction in all_reactions:
+            reaction_id = reaction.id
+
+            add = True
+
+            # exclude exchange reactions from the comparison
+            if len(model.model.exchanges) > 0 and add:
+                if reaction in model.model.exchanges:
+                    add = False
+
+            if "drain" in str(reaction.name).lower() and add:
+                add = False
+
+            if "exchange" in str(reaction.name).lower() and add:
+                add = False
+
+            if str(reaction_id).upper().startswith("EX_") and add:
+                add = False
+
+            # exclude demand reactions from the comparison
+            if len(model.model.demands) > 0 and add:
+                if reaction in model.model.demands:
+                    add = False
+
+            # exclude transport reactions from the comparison
+            if len(model.model.sinks) > 0 and add:
+                if reaction in model.model.sinks:
+                    add = False
+
+            # exclude transport reactions from the comparison
+            if "transport" in str(reaction.name).lower() and add:
+                add = False
+
+            if str(reaction_id).upper().startswith("TRANS-RXN") and add:
+                add = False
+
+            if "TRANS-RXN" in str(reaction.name).upper() and add:
+                add = False
+
+            if len(transport_reactions) > 0 and add:
+                for group in transport_reactions.values():
+                    if reaction_id in group:
+                        add = False
+                        break
+
+            if add:
+                reactions_to_convert.append(reaction_id)
+
+            # products = []
+            # products_comp = ""
+            # for product in reaction.products:
+            #     product_id = product.id
+            #     if model.reconstruction_tool == ReconstructionTool.MERLIN:
+            #         parts = product_id.split("__")
+            #         if len(parts) > 2:
+            #             product_id = "__".join(parts[:-1])
+            #         else:
+            #             product_id = product_id.split("__")[0]
+            #     elif model.reconstruction_tool == ReconstructionTool.AUREME or \
+            #             model.reconstruction_tool == ReconstructionTool.CARVEME or \
+            #             model.reconstruction_tool == ReconstructionTool.MODELSEED or \
+            #             model.reconstruction_tool == ReconstructionTool.PATHWAYTOOLS or \
+            #             model.reconstruction_tool is None:
+            #         parts = product_id.split("_")
+            #         if len(parts) > 2:
+            #             product_id = "_".join(parts[:-1])
+            #         else:
+            #             product_id = product_id.split("_")[0]
+            #
+            #     products.append(product_id)
+            #
+            #     if products_comp != "" and products_comp != product.compartment:
+            #         products_comp = None
+            #     else:
+            #         products_comp = product.compartment
+            #
+            # reactants = []
+            # reactants_comp = ""
+            # for reactant in reaction.reactants:
+            #     reactant_id = reactant.id
+            #     if model.reconstruction_tool == ReconstructionTool.MERLIN:
+            #         parts = reactant_id.split("__")
+            #         if len(parts) > 2:
+            #             reactant_id = "__".join(parts[:-1])
+            #         else:
+            #             reactant_id = reactant_id.split("__")[0]
+            #     elif model.reconstruction_tool == ReconstructionTool.AUREME or \
+            #             model.reconstruction_tool == ReconstructionTool.CARVEME or \
+            #             model.reconstruction_tool == ReconstructionTool.MODELSEED or \
+            #             model.reconstruction_tool == ReconstructionTool.PATHWAYTOOLS or \
+            #             model.reconstruction_tool is None:
+            #         parts = reactant_id.split("_")
+            #         if len(parts) > 2:
+            #             reactant_id = "_".join(parts[:-1])
+            #         else:
+            #             reactant_id = reactant_id.split("_")[0]
+            #
+            #     reactants.append(reactant_id)
+            #
+            #     if reactants_comp != "" and reactants_comp != reactant.compartment:
+            #         reactants_comp = None
+            #     else:
+            #         reactants_comp = reactant.compartment
+            #
+            # if products_comp is not None and reactants_comp is not None and products_comp != reactants_comp:
+            #     if products in reactants and (len(reactants) - 1) <= len(products) <= (len(reactants) + 1):
+            #         add = False
+            #
+            # if add:
+            #     reactions_to_convert.append(converted_reaction)
+            #
+            # print(len(reactions_to_convert))
+
+        # reactions_converter_metanetx = MetaNetXReactionsConverter("xrefs_files/reac_xrefs_reduced.csv")
+        ModelSEED_reactions_converter = ReactionsConverter("xrefs_files/ModelSEED-reactions.csv")
+        model.reaction_converter = ModelSEED_reactions_converter
+        ModelSEED_report = model.get_reactions_other_version(database="modelseed",
+                                                             reactions=reactions_to_convert,
+                                                             preprocess_ids=True)
+        ModelSEED_convertable_reactions = ModelSEED_report.convertable
+
+        print("Tool: " + str(model.reconstruction_tool))
+        print("Total number of reactions: " + str(len(model.model.reactions)))
+
+        print("Reactions converted with ModelSEED: " + str(len(ModelSEED_convertable_reactions.keys())))
+        print("Reactions not converted with ModelSEED: " + str(len(ModelSEED_report.non_convertable)))
+
+        for convertable_reaction in ModelSEED_convertable_reactions:
+            converted_reactions = ModelSEED_convertable_reactions[convertable_reaction]
+
+            if len(converted_reactions) > 1:
                 dic = {}
-                for kegg_reaction in kegg_reactions:
-                    dic[kegg_reaction] = 0
+                for converted_reaction in converted_reactions:
+                    dic[converted_reaction] = 0
                     for model in reaction_sets.keys():
-                        if kegg_reaction in reaction_sets[model]:
-                            dic[kegg_reaction] = int(dic[kegg_reaction]) + 1
+                        if converted_reaction in reaction_sets[model]:
+                            dic[converted_reaction] = int(dic[converted_reaction]) + 1
 
                 dic = dict(sorted(dic.items(), key=lambda item: item[1]))
-                reaction_set.append(list(dic.keys())[-1])
+                reaction_set.append((str(list(dic.keys())[-1])).upper())
             else:
-                for kegg_reaction in kegg_reactions:
-                    if kegg_reactions not in reaction_set:
-                        reaction_set.append(kegg_reaction)
+                for converted_reaction in converted_reactions:
+                    if converted_reaction not in reaction_set:
+                        reaction_set.append(str(converted_reaction).upper())
+
+
+        ModelSEED_non_convertable_reactions = ModelSEED_report.non_convertable
+        MetaNetX_reactions_converter = ReactionsConverter("xrefs_files/MetaNetX-reactions.csv")
+        model.reaction_converter = MetaNetX_reactions_converter
+        MetaNetX_report = model.get_reactions_other_version(database="metanetx",
+                                                            reactions=ModelSEED_non_convertable_reactions,
+                                                            preprocess_ids=False)
+        MetaNetX_convertable_reactions = MetaNetX_report.convertable
+
+        print("Reactions converted with MetaNetX: " + str(len(MetaNetX_convertable_reactions.keys())))
+        print("Reactions not converted with MetaNetX: " + str(len(MetaNetX_report.non_convertable)))
+        print(MetaNetX_report.non_convertable)
+        print()
+
+        for convertable_reaction in MetaNetX_convertable_reactions:
+            converted_reactions = MetaNetX_convertable_reactions[convertable_reaction]
+
+            if len(converted_reactions) > 1:
+                dic = {}
+                for converted_reaction in converted_reactions:
+                    dic[converted_reaction] = 0
+                    for model in reaction_sets.keys():
+                        if converted_reaction in reaction_sets[model]:
+                            dic[converted_reaction] = int(dic[converted_reaction]) + 1
+
+                dic = dict(sorted(dic.items(), key=lambda item: item[1]))
+                reaction_set.append((str(list(dic.keys())[-1])).upper())
+            else:
+                for converted_reaction in converted_reactions:
+                    if converted_reaction not in reaction_set:
+                        reaction_set.append(str(converted_reaction).upper())
+
         reaction_sets[model_name] = set(reaction_set)
     return reaction_sets
 
-def getGeneSets(models) -> dict:
 
+def getGeneSets(models) -> dict:
     gene_sets = {}
 
     for model_name in models.keys():
         gene_set = []
         model = models[model_name]
         for gene in model.model.genes:
-            gene_set.append(gene.id)
+            gene_set.append((str(gene.id)).upper())
         gene_sets[model_name] = set(gene_set)
     return gene_sets
 
-def resultsGeneration (organism, genes_dotplot_path, reactions_dotplot_path) -> None:
 
+def resultsGeneration(organism, genes_dotplot_path, reactions_dotplot_path) -> None:
     models = getModels(organism=organism)
     modelsComparisonMetrics = ModelsComparisonMetrics(models=models)
 
@@ -113,19 +285,6 @@ def resultsGeneration (organism, genes_dotplot_path, reactions_dotplot_path) -> 
 
     reaction_sets = getReactionSets(models=models)
     modelsComparisonMetrics.set_reaction_sets(reaction_sets=reaction_sets)
-
-    for modelName in models.keys():
-
-        model = models[modelName]
-        geneSet = gene_sets[modelName]
-        reactionSet = reaction_sets[modelName]
-
-        print(modelName)
-        print(len(model.model.genes))
-        print(len(geneSet))
-        print(len(model.model.reactions))
-        print(len(reactionSet))
-        print()
 
     # Genes
 
@@ -145,8 +304,9 @@ def resultsGeneration (organism, genes_dotplot_path, reactions_dotplot_path) -> 
 
     # Reactions
 
-    jaccard_distances_reactions = modelsComparisonMetrics.calculate_jaccard_distances(reference_model_name="reference model",
-                                                                                      type=Type.REACTIONS)
+    jaccard_distances_reactions = modelsComparisonMetrics.calculate_jaccard_distances(
+        reference_model_name="reference model",
+        type=Type.REACTIONS)
     ratios_reactions = modelsComparisonMetrics.calculate_ratios(reference_model_name="reference model",
                                                                 type=Type.REACTIONS)
 
