@@ -38,6 +38,10 @@ class ModelAssessor:
 
         transport_reactions = {}
 
+        exchanges = model.model.exchanges
+        demands = model.model.demands
+        sinks = model.model.sinks
+
         for group in model.model.groups:
             reactions_list = []
             if "transport" in str(group.name).lower() or "drain" in str(group.name).lower():
@@ -51,8 +55,8 @@ class ModelAssessor:
             add = True
 
             # exclude exchange reactions from the comparison
-            if len(model.model.exchanges) > 0 and add:
-                if reaction in model.model.exchanges:
+            if len(exchanges) > 0 and add:
+                if reaction in exchanges:
                     add = False
 
             if "drain" in str(reaction.name).lower() and add:
@@ -65,13 +69,13 @@ class ModelAssessor:
                 add = False
 
             # exclude demand reactions from the comparison
-            if len(model.model.demands) > 0 and add:
-                if reaction in model.model.demands:
+            if len(demands) > 0 and add:
+                if reaction in demands:
                     add = False
 
             # exclude transport reactions from the comparison
-            if len(model.model.sinks) > 0 and add:
-                if reaction in model.model.sinks:
+            if len(sinks) > 0 and add:
+                if reaction in sinks:
                     add = False
 
             # exclude transport reactions from the comparison
@@ -266,7 +270,7 @@ class ResultsReport:
 
         model_reactions, models_info = self.model_assessor.convert_reactions(self.models_to_be_assessed)
         report_df = DataFrame(columns=["model", "reactions number", "removed reactions", "converted reactions",
-                              "non-converted reactions", "recall", "precision", "f1"])
+                                       "non-converted reactions", "recall", "precision", "f1"])
 
         for i, model in enumerate(model_reactions):
             true_positives, false_positives, false_negatives = \
@@ -277,10 +281,10 @@ class ResultsReport:
             f1_score = self.model_assessor.get_f1_score(recall, precision)
 
             report_df.at[i, "model"] = model
-            report_df.at[i, "reactions number"] = models_info["reactions number"]
-            report_df.at[i, "removed reactions"] = models_info["removed reactions"]
-            report_df.at[i, "converted reactions"] = models_info["converted reactions"]
-            report_df.at[i, "non-converted reactions"] = models_info["non-converted reactions"]
+            report_df.at[i, "reactions number"] = models_info[model]["reactions number"]
+            report_df.at[i, "removed reactions"] = models_info[model]["removed reactions"]
+            report_df.at[i, "converted reactions"] = models_info[model]["converted reactions"]
+            report_df.at[i, "non-converted reactions"] = models_info[model]["non-converted reactions"]
             report_df.at[i, "recall"] = recall
             report_df.at[i, "precision"] = precision
             report_df.at[i, "f1"] = f1_score

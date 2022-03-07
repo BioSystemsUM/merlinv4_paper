@@ -71,6 +71,7 @@ class ReconstructionTool(Enum):
     MODELSEED = 6
     PATHWAYTOOLS = 7
     RAVEN = 8
+    T_GONDII_CURATED = 9
 
 
 if __name__ == "__main__":
