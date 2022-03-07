@@ -114,7 +114,7 @@ class Model(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_reactions_other_version(self, database):
+    def get_reactions_other_version(self, database, reactions, preprocess_ids):
         raise NotImplementedError
 
     @abstractmethod
@@ -181,14 +181,14 @@ class CobraModel(Model):
 
             if preprocess_ids:
 
-                if self.reconstruction_tool == ReconstructionTool.MERLIN:
+                if self.reconstruction_tool == ReconstructionTool.MERLIN.value:
                     parts = reaction_id.split("__")
                     if len(parts) > 2:
                         reaction_id = "__".join(parts[:-1])
                     else:
                         reaction_id = reaction_id.split("__")[0]
 
-                elif self.reconstruction_tool == ReconstructionTool.MODELSEED:
+                elif self.reconstruction_tool == ReconstructionTool.MODELSEED.value:
                     parts = reaction_id.split("_")
                     if len(parts) > 2:
                         reaction_id = "_".join(parts[:-1])
