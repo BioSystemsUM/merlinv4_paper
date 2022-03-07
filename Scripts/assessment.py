@@ -1,14 +1,7 @@
-import os
-from typing import List
-
-import pandas as pd
-from cobra import Model
+from typing import Dict
 
 import numpy as np
 from pandas import DataFrame
-from sklearn.metrics import confusion_matrix
-
-import seaborn as sns
 import matplotlib.pyplot as plt
 
 from matplotlib.patches import Circle, RegularPolygon
@@ -18,15 +11,24 @@ from matplotlib.projections import register_projection
 from matplotlib.spines import Spine
 from matplotlib.transforms import Affine2D
 
+from Scripts.core import Model
 from Scripts.xrefs_converters import ReactionsConverter
 
 
 class ModelAssessor:
 
     def __init__(self, reference_model: Model):
+        self.reference_model = reference_model
+        self.reactions_converter = ReactionsConverter("xrefs_files/ModelSEED-reactions.csv")
+        self.reference_reaction_sets = self.convert_reference_model_with_ModelSEED_converter()
+        self.general_reference_reaction_set = []
+
+        for reactions in list(self.reference_reaction_sets.values()):
+            self.general_reference_reaction_set.extend([re.upper() for re in reactions])
+        self.general_reference_reaction_set = set(self.general_reference_reaction_set)
+
         self.y_true = None
         self.reference_model_reactions = None
-        self.reference_model = reference_model
 
     @staticmethod
     def get_reactions_to_convert(model):
@@ -93,48 +95,88 @@ class ModelAssessor:
 
         return reactions_to_convert
 
-    @staticmethod
-    def convert_reactions(models):
+    def convert_reference_model_with_ModelSEED_converter(self):
         reaction_sets = {}
+        reactions_to_convert = ModelAssessor.get_reactions_to_convert(self.reference_model)
+
+        self.reference_model.reaction_converter = self.reactions_converter
+        ModelSEED_report = self.reference_model.get_reactions_other_version(database="modelseed",
+                                                                            reactions=reactions_to_convert,
+                                                                            preprocess_ids=True)
+        ModelSEED_convertable_reactions = ModelSEED_report.convertable
+
+        print("Tool: " + str(self.reference_model.reconstruction_tool))
+        print("Total number of reactions: " + str(len(self.reference_model.model.reactions)))
+
+        print("Reactions converted with ModelSEED: " + str(len(ModelSEED_convertable_reactions.keys())))
+        print("Reactions not converted with ModelSEED: " + str(len(ModelSEED_report.non_convertable)))
+
+        for convertable_reaction in ModelSEED_convertable_reactions:
+            converted_reactions = ModelSEED_convertable_reactions[convertable_reaction]
+
+            for converted_reaction in converted_reactions:
+                if convertable_reaction in reaction_sets:
+                    reaction_sets[convertable_reaction].append(converted_reaction.upper())
+
+                else:
+                    reaction_sets[convertable_reaction] = [converted_reaction.upper()]
+
+        return reaction_sets
+
+    def convert_model_reactions_with_ModelSEED_converter(self, model):
+        reaction_set = []
+        model_info = {}
+
+        reactions_to_convert = ModelAssessor.get_reactions_to_convert(model)
+        # reactions_to_convert = [reaction.id for reaction in model.model.reactions]
+
+        model.reaction_converter = self.reactions_converter
+        ModelSEED_report = model.get_reactions_other_version(database="modelseed",
+                                                             reactions=reactions_to_convert,
+                                                             preprocess_ids=True)
+        ModelSEED_convertable_reactions = ModelSEED_report.convertable
+
+        print("Tool: " + str(model.reconstruction_tool))
+        print("Total number of reactions: " + str(len(model.model.reactions)))
+
+        model_info["reactions number"] = len(model.model.reactions)
+        model_info["removed reactions"] = len(model.model.reactions) - len(reactions_to_convert)
+        model_info["converted reactions"] = len(ModelSEED_convertable_reactions.keys())
+        model_info["non-converted reactions"] = len(ModelSEED_report.non_convertable)
+
+        print("Reactions converted with ModelSEED: " + str(len(ModelSEED_convertable_reactions.keys())))
+        print("Reactions not converted with ModelSEED: " + str(len(ModelSEED_report.non_convertable)))
+
+        for convertable_reaction in ModelSEED_convertable_reactions:
+            converted_reactions = ModelSEED_convertable_reactions[convertable_reaction]
+
+            if len(converted_reactions) > 1:
+                found_reaction = False
+                for converted_reaction in converted_reactions:
+
+                    if converted_reaction in self.general_reference_reaction_set:
+                        found_reaction = True
+                        reaction_set.append(converted_reaction)
+                        break
+
+                if not found_reaction:
+                    reaction_set.append(converted_reactions[0])
+
+            else:
+                for converted_reaction in converted_reactions:
+                    if converted_reaction not in reaction_set:
+                        reaction_set.append(str(converted_reaction).upper())
+
+        return set(reaction_set), model_info
+
+    def convert_reactions(self, models):
+        reaction_sets = {}
+        models_info = {}
 
         for model_name in models.keys():
-
-            reaction_set = []
-            model = models[model_name]
-
-            reactions_to_convert = ModelAssessor.get_reactions_to_convert(model)
-            #reactions_to_convert = [reaction.id for reaction in model.model.reactions]
-
-            ModelSEED_reactions_converter = ReactionsConverter("xrefs_files/ModelSEED-reactions.csv")
-            model.reaction_converter = ModelSEED_reactions_converter
-            ModelSEED_report = model.get_reactions_other_version(database="modelseed",
-                                                                 reactions=reactions_to_convert,
-                                                                 preprocess_ids=True)
-            ModelSEED_convertable_reactions = ModelSEED_report.convertable
-
-            print("Tool: " + str(model.reconstruction_tool))
-            print("Total number of reactions: " + str(len(model.model.reactions)))
-
-            print("Reactions converted with ModelSEED: " + str(len(ModelSEED_convertable_reactions.keys())))
-            print("Reactions not converted with ModelSEED: " + str(len(ModelSEED_report.non_convertable)))
-
-            for convertable_reaction in ModelSEED_convertable_reactions:
-                converted_reactions = ModelSEED_convertable_reactions[convertable_reaction]
-
-                if len(converted_reactions) > 1:
-                    dic = {}
-                    for converted_reaction in converted_reactions:
-                        dic[converted_reaction] = 0
-                        for model in reaction_sets.keys():
-                            if converted_reaction in reaction_sets[model]:
-                                dic[converted_reaction] = int(dic[converted_reaction]) + 1
-
-                    dic = dict(sorted(dic.items(), key=lambda item: item[1]))
-                    reaction_set.append((str(list(dic.keys())[-1])).upper())
-                else:
-                    for converted_reaction in converted_reactions:
-                        if converted_reaction not in reaction_set:
-                            reaction_set.append(str(converted_reaction).upper())
+            reaction_set, model_info = self.convert_model_reactions_with_ModelSEED_converter(models[model_name])
+            models_info[model_name] = model_info
+            reaction_sets[model_name] = reaction_set
 
             # ModelSEED_non_convertable_reactions = ModelSEED_report.non_convertable
             # MetaNetX_reactions_converter = ReactionsConverter("xrefs_files/MetaNetX-reactions.csv")
@@ -167,86 +209,83 @@ class ModelAssessor:
             #             if converted_reaction not in reaction_set:
             #                 reaction_set.append(str(converted_reaction).upper())
             #
-            reaction_sets[model_name] = set(reaction_set)
-        return reaction_sets
 
-
-class ModelAssessor2:
-
-    def __init__(self, reference_model: Model):
-        self.y_true = None
-        self.bigg_reactions = pd.read_csv("bigg_reaction_database/bigg_models_reactions.txt", sep="\t")
-        mask = self.bigg_reactions["bigg_id"].str.contains("DM_") | \
-               self.bigg_reactions["bigg_id"].str.contains("EX_") | \
-               self.bigg_reactions["bigg_id"].str.contains("BIOMASS_")
-
-        self.bigg_reactions = list(self.bigg_reactions[~mask].loc[:, "bigg_id"].values)
-
-        self.reference_model_reactions = [reaction.id for reaction in reference_model.reactions if
-                                          all([forbidden not in reaction.id for forbidden in
-                                               ["DM_", "EX_", "BIOMASS_"]])]
-
-        self.get_y_true()
+        return reaction_sets, models_info
 
     def get_y_true(self):
-        self.y_true = np.empty(len(self.bigg_reactions))
+        pass
 
-        for i, reaction in enumerate(self.bigg_reactions):
-            if reaction in self.reference_model_reactions:
-                self.y_true[i] = 1
-            else:
-                self.y_true[i] = 0
+    def get_confusion_matrix_cells(self, assessed_model_reactions):
+        """
 
-        return self.y_true
+        :param assessed_model_reactions:
+        :return: TP, FP, FN
+        """
 
-    def get_y_predicted(self, model_reactions: List[str]):
-        y_predicted = np.empty(len(self.bigg_reactions))
+        true_positives = 0
+        false_positives = 0
+        false_negatives = 0
+        for reaction in assessed_model_reactions:
+            if reaction in self.general_reference_reaction_set:
+                true_positives += 1
+            elif reaction not in self.general_reference_reaction_set:
+                false_positives += 1
 
-        for i, reaction in enumerate(self.bigg_reactions):
-            if reaction in model_reactions:
-                y_predicted[i] = 1
-            else:
-                y_predicted[i] = 0
+        for reaction in self.reference_reaction_sets:
+            found = False
+            for converted_reaction in self.reference_reaction_sets[reaction]:
+                if converted_reaction in assessed_model_reactions:
+                    found = True
+                    break
 
-        return y_predicted
+            if not found:
+                false_negatives += 1
 
-    def compare_model(self, model: Model, metrics: List[callable]):
-        results = {}
-
-        model_reactions = [reaction.id for reaction in model.reactions if
-                           all([forbidden not in reaction.id for forbidden in ["DM_", "EX_", "BIOMASS_"]])]
-
-        for metric in metrics:
-            y_predicted = self.get_y_predicted(model_reactions)
-            metric_result = metric(self.y_true, y_predicted)
-            results[metric.__name__] = metric_result
-
-        return results
-
-    def plot_confusion_matrix(self, model: Model, output_file_path: str):
-
-        model_reactions = [reaction.id for reaction in model.reactions if
-                           all([forbidden not in reaction.id for forbidden in ["DM_", "EX_", "BIOMASS_"]])]
-
-        y_predicted = self.get_y_predicted(model_reactions)
-        cm = confusion_matrix(self.y_true, y_predicted)
-        self.generate_confusion_matrix(cm, output_file_path)
+        return true_positives, false_positives, false_negatives
 
     @staticmethod
-    def generate_confusion_matrix(cm, output_path):
-        index = ['Negative', 'Positive']
-        columns = ['Negative', 'Positive']
-        cm_df = pd.DataFrame(cm, columns, index)
-        plt.figure(figsize=(10, 6))
-        sns.heatmap(cm_df, annot=True, fmt=".8g")
-        plt.savefig(output_path)
+    def get_recall(true_positive, false_negative):
+        return true_positive / (true_positive + false_negative)
+
+    @staticmethod
+    def get_precision(true_positive, false_positive):
+        return true_positive / (true_positive + false_positive)
+
+    @staticmethod
+    def get_f1_score(recall, precision):
+        return 2 * (recall * precision) / (recall + precision)
 
 
 class ResultsReport:
 
-    def __init__(self, reference_model: Model, models_to_be_assessed: List[Model]):
+    def __init__(self, reference_model: Model, models_to_be_assessed: Dict[str, Model]):
         self.model_assessor = ModelAssessor(reference_model)
         self.models_to_be_assessed = models_to_be_assessed
+
+    def generate_report(self, file_path):
+
+        model_reactions, models_info = self.model_assessor.convert_reactions(self.models_to_be_assessed)
+        report_df = DataFrame(columns=["model", "reactions number", "removed reactions", "converted reactions",
+                              "non-converted reactions", "recall", "precision", "f1"])
+
+        for i, model in enumerate(model_reactions):
+            true_positives, false_positives, false_negatives = \
+                self.model_assessor.get_confusion_matrix_cells(model_reactions[model])
+
+            precision = self.model_assessor.get_precision(true_positives, false_positives)
+            recall = self.model_assessor.get_recall(true_positives, false_negatives)
+            f1_score = self.model_assessor.get_f1_score(recall, precision)
+
+            report_df.at[i, "model"] = model
+            report_df.at[i, "reactions number"] = models_info["reactions number"]
+            report_df.at[i, "removed reactions"] = models_info["removed reactions"]
+            report_df.at[i, "converted reactions"] = models_info["converted reactions"]
+            report_df.at[i, "non-converted reactions"] = models_info["non-converted reactions"]
+            report_df.at[i, "recall"] = recall
+            report_df.at[i, "precision"] = precision
+            report_df.at[i, "f1"] = f1_score
+
+        report_df.to_csv(file_path, index=False)
 
     def radar_factory(self, num_vars, frame='circle'):
         """Create a radar chart with `num_vars` axes.
@@ -335,25 +374,6 @@ class ResultsReport:
 
         register_projection(RadarAxes)
         return theta
-
-    def generate_confusion_matrices(self, output_folder_path: str):
-
-        os.makedirs(output_folder_path, exist_ok=True)
-
-        for i, model in enumerate(self.models_to_be_assessed):
-            self.model_assessor.plot_confusion_matrix(model, os.path.join(output_folder_path,
-                                                                          model.id))
-
-    def generate_report_csv(self, metrics: List[callable], output_file_path: str):
-        results = DataFrame()
-
-        for i, model in enumerate(self.models_to_be_assessed):
-            metrics_results = self.model_assessor.compare_model(model, metrics)
-            results.at[i, "model"] = model.id
-            for metric in metrics_results:
-                results.at[i, metric] = metrics_results[metric]
-
-        results.to_csv(output_file_path, index=False)
 
     def generate_radar_graph(self, metrics, metrics_names, output_file):
         results = []
