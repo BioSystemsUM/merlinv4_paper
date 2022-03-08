@@ -1,3 +1,4 @@
+import re
 from typing import Dict
 
 import numpy as np
@@ -12,10 +13,11 @@ from matplotlib.spines import Spine
 from matplotlib.transforms import Affine2D
 
 from Scripts.core import Model
+from Scripts.utils import ReconstructionTool
 from Scripts.xrefs_converters import ReactionsConverter
 
 
-class ModelAssessor:
+class ReactionsAssessor:
 
     def __init__(self, reference_model: Model):
         self.reference_model = reference_model
@@ -38,6 +40,10 @@ class ModelAssessor:
 
         transport_reactions = {}
 
+        exchanges = model.model.exchanges
+        demands = model.model.demands
+        sinks = model.model.sinks
+
         for group in model.model.groups:
             reactions_list = []
             if "transport" in str(group.name).lower() or "drain" in str(group.name).lower():
@@ -51,8 +57,8 @@ class ModelAssessor:
             add = True
 
             # exclude exchange reactions from the comparison
-            if len(model.model.exchanges) > 0 and add:
-                if reaction in model.model.exchanges:
+            if len(exchanges) > 0 and add:
+                if reaction in exchanges:
                     add = False
 
             if "drain" in str(reaction.name).lower() and add:
@@ -65,13 +71,13 @@ class ModelAssessor:
                 add = False
 
             # exclude demand reactions from the comparison
-            if len(model.model.demands) > 0 and add:
-                if reaction in model.model.demands:
+            if len(demands) > 0 and add:
+                if reaction in demands:
                     add = False
 
             # exclude transport reactions from the comparison
-            if len(model.model.sinks) > 0 and add:
-                if reaction in model.model.sinks:
+            if len(sinks) > 0 and add:
+                if reaction in sinks:
                     add = False
 
             # exclude transport reactions from the comparison
@@ -97,7 +103,7 @@ class ModelAssessor:
 
     def convert_reference_model_with_ModelSEED_converter(self):
         reaction_sets = {}
-        reactions_to_convert = ModelAssessor.get_reactions_to_convert(self.reference_model)
+        reactions_to_convert = ReactionsAssessor.get_reactions_to_convert(self.reference_model)
 
         self.reference_model.reaction_converter = self.reactions_converter
         ModelSEED_report = self.reference_model.get_reactions_other_version(database="modelseed",
@@ -127,7 +133,7 @@ class ModelAssessor:
         reaction_set = []
         model_info = {}
 
-        reactions_to_convert = ModelAssessor.get_reactions_to_convert(model)
+        reactions_to_convert = ReactionsAssessor.get_reactions_to_convert(model)
         # reactions_to_convert = [reaction.id for reaction in model.model.reactions]
 
         model.reaction_converter = self.reactions_converter
@@ -212,10 +218,7 @@ class ModelAssessor:
 
         return reaction_sets, models_info
 
-    def get_y_true(self):
-        pass
-
-    def get_confusion_matrix_cells(self, assessed_model_reactions):
+    def get_confusion_matrix_cells_for_reactions(self, assessed_model_reactions):
         """
 
         :param assessed_model_reactions:
@@ -243,6 +246,28 @@ class ModelAssessor:
 
         return true_positives, false_positives, false_negatives
 
+    def get_confusion_matrix_cells_for_genes(self, assessed_model_genes):
+
+        if self.reference_model.reconstruction_tool == ReconstructionTool.T_GONDII_CURATED.value:
+            reference_model_genes = [gene.lower() for gene in self.reference_model.model.genes]
+        else:
+            reference_model_genes = [gene.id.lower() for gene in self.reference_model.model.genes]
+        true_positives = 0
+        false_positives = 0
+        false_negatives = 0
+        for gene in assessed_model_genes:
+            if gene in reference_model_genes:
+                true_positives += 1
+            else:
+                false_positives += 1
+
+        for gene in reference_model_genes:
+
+            if gene not in assessed_model_genes:
+                false_negatives += 1
+
+        return true_positives, false_positives, false_negatives
+
     @staticmethod
     def get_recall(true_positive, false_negative):
         return true_positive / (true_positive + false_negative)
@@ -259,28 +284,60 @@ class ModelAssessor:
 class ResultsReport:
 
     def __init__(self, reference_model: Model, models_to_be_assessed: Dict[str, Model]):
-        self.model_assessor = ModelAssessor(reference_model)
+
+        if reference_model.reconstruction_tool == ReconstructionTool.T_GONDII_CURATED.value:
+            reactions = [reaction.id for reaction in reference_model.model.reactions]
+            genes = []
+            for reaction in reactions:
+                genes_in_reaction = [x.group() for x in re.finditer("TGME[0-9]+_[0-9]+", reaction)]
+                genes.extend(genes_in_reaction)
+
+            reference_model.model.genes = genes
+
+        self.model_assessor = ReactionsAssessor(reference_model)
         self.models_to_be_assessed = models_to_be_assessed
 
-    def generate_report(self, file_path):
+
+    def generate_reactions_report(self, file_path):
 
         model_reactions, models_info = self.model_assessor.convert_reactions(self.models_to_be_assessed)
         report_df = DataFrame(columns=["model", "reactions number", "removed reactions", "converted reactions",
-                              "non-converted reactions", "recall", "precision", "f1"])
+                                       "non-converted reactions", "recall", "precision", "f1"])
 
         for i, model in enumerate(model_reactions):
             true_positives, false_positives, false_negatives = \
-                self.model_assessor.get_confusion_matrix_cells(model_reactions[model])
+                self.model_assessor.get_confusion_matrix_cells_for_reactions(model_reactions[model])
 
             precision = self.model_assessor.get_precision(true_positives, false_positives)
             recall = self.model_assessor.get_recall(true_positives, false_negatives)
             f1_score = self.model_assessor.get_f1_score(recall, precision)
 
             report_df.at[i, "model"] = model
-            report_df.at[i, "reactions number"] = models_info["reactions number"]
-            report_df.at[i, "removed reactions"] = models_info["removed reactions"]
-            report_df.at[i, "converted reactions"] = models_info["converted reactions"]
-            report_df.at[i, "non-converted reactions"] = models_info["non-converted reactions"]
+            report_df.at[i, "reactions number"] = models_info[model]["reactions number"]
+            report_df.at[i, "removed reactions"] = models_info[model]["removed reactions"]
+            report_df.at[i, "converted reactions"] = models_info[model]["converted reactions"]
+            report_df.at[i, "non-converted reactions"] = models_info[model]["non-converted reactions"]
+            report_df.at[i, "recall"] = recall
+            report_df.at[i, "precision"] = precision
+            report_df.at[i, "f1"] = f1_score
+
+        report_df.to_csv(file_path, index=False)
+
+    def generate_genes_report(self, file_path):
+
+        report_df = DataFrame(columns=["model", "genes number", "recall", "precision", "f1"])
+
+        for i, model in enumerate(self.models_to_be_assessed):
+            genes = [gene.id.lower() for gene in self.models_to_be_assessed[model].model.genes]
+            true_positives, false_positives, false_negatives = \
+                self.model_assessor.get_confusion_matrix_cells_for_genes(genes)
+
+            precision = self.model_assessor.get_precision(true_positives, false_positives)
+            recall = self.model_assessor.get_recall(true_positives, false_negatives)
+            f1_score = self.model_assessor.get_f1_score(recall, precision)
+
+            report_df.at[i, "model"] = model
+            report_df.at[i, "genes number"] = len(genes)
             report_df.at[i, "recall"] = recall
             report_df.at[i, "precision"] = precision
             report_df.at[i, "f1"] = f1_score

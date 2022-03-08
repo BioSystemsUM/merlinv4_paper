@@ -152,14 +152,6 @@ class CobraModel(Model):
         for metabolite in self.model.metabolites:
             metabolite_id = metabolite.id
 
-            # if self.reconstruction_tool == ReconstructionTool.MERLIN:
-            #     metabolite_id = str(metabolite.id).split("__")[0]
-            # elif self.reconstruction_tool == ReconstructionTool.MODELSEED or \
-            #         self.reconstruction_tool == ReconstructionTool.CARVEME or \
-            #         self.reconstruction_tool == ReconstructionTool.AUREME or \
-            #         self.reconstruction_tool == ReconstructionTool.PATHWAYTOOLS:
-            #     metabolite_id = str(metabolite.id).split("_")[0]
-
             metabolite_id = re.sub(regex, "", metabolite_id)
             metabolite_list = self.metabolite_converter.convert(metabolite_id, database)
             if metabolite_list:
@@ -195,10 +187,10 @@ class CobraModel(Model):
                     else:
                         reaction_id = reaction_id.split("_")[0]
 
-            # if self.reconstruction_tool == ReconstructionTool.MERLIN:
-            #     reaction_id = str(reaction_id).split("__")[0]
-            # elif self.reconstruction_tool == ReconstructionTool.MODELSEED:
-            #     reaction_id = str(reaction_id).split("_")[0]
+                elif self.reconstruction_tool == ReconstructionTool.T_GONDII_CURATED.value:
+                    match = re.match("R[0-9]{5}", reaction_id)
+                    if match:
+                        reaction_id = reaction_id[match.start():match.end()]
 
             reaction_list = self.reaction_converter.convert(reaction_id, database)
             if reaction_list:
