@@ -256,8 +256,8 @@ if __name__ == "__main__":
 
     print("Generating results for Bordetella pertussis")
     resultsGeneration(organism="Bpertussis",
-                      genes_dotplot_path="results/Bpertussis-genes-dot-plot.jpeg",
-                      reactions_dotplot_path="results/Bpertussis-reactions-dot-plot.jpeg")
+                      genes_dotplot_path="../results/Bpertussis-genes-dot-plot.jpeg",
+                      reactions_dotplot_path="../results/Bpertussis-reactions-dot-plot.jpeg")
 
     # print("Generating results for Chlorella vulgaris")
     # resultsGeneration(organism="Cvulgaris",
@@ -266,8 +266,8 @@ if __name__ == "__main__":
 
     print("Generating results for Lactobacillus plantarum")
     resultsGeneration(organism="Lplantarum",
-                      genes_dotplot_path="results/Lplantarum-genes-dot-plot.jpeg",
-                      reactions_dotplot_path="results/Lplantarum-reactions-dot-plot.jpeg")
+                      genes_dotplot_path="../results/Lplantarum-genes-dot-plot.jpeg",
+                      reactions_dotplot_path="../results/Lplantarum-reactions-dot-plot.jpeg")
 
     # print("Generating results for Toxoplasma gondii")
     # resultsGeneration(organism="Tgondii ",
