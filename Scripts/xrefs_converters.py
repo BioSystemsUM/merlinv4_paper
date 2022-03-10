@@ -164,6 +164,7 @@ class MetaNetXReactionsConverter(XRefsConverter):
                 else:
                     self.source_to_external_database_map[internal_id]["seed"].append(external_id)
 
+
 class ReactionsConverter(XRefsConverter):
 
     def parse_xrefs_file(self, file_path):

@@ -9,11 +9,18 @@ from Scripts.assessment import ResultsReport
 class TestAssessment(TestCase):
 
     def test_merlin_reaction_ids_conversion(self):
-        model2_model_seed = read_sbml_into_cobra_model(file_path="../Models/Merlin/Bpertussis.xml",
-                                                       database_version="kegg",
-                                                       reconstruction_tool=ReconstructionTool.MERLIN.value)
+        model2_model_seed = read_sbml_into_cobra_model(file_path="../Models/ModelSEED/Bpertussis.xml",
+                                                       database_version="modelseed",
+                                                       reconstruction_tool=ReconstructionTool.MODELSEED.value)
 
-        reactions = ReactionsAssessor.convert_reactions({"merlin": model2_model_seed})
+        model = read_sbml_into_cobra_model(file_path="../Models/Manually_curated/Bpertussis.xml",
+                                           database_version="bigg", reconstruction_tool="curated")
+
+        models_to_assess = {"model_seed": model2_model_seed}
+        report = ResultsReport(model, models_to_assess)
+        report.generate_reactions_report("coiso.csv")
+
+
 
     def test_genes_analysis(self):
         merlin_model = read_sbml_into_cobra_model(file_path="../Models/Merlin/Bpertussis.xml",

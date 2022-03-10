@@ -19,9 +19,16 @@ from Scripts.xrefs_converters import ReactionsConverter
 
 class ReactionsAssessor:
 
-    def __init__(self, reference_model: Model):
+    def __init__(self, reference_model: Model, conversion_method: str, reference_model_format: str):
         self.reference_model = reference_model
-        self.reactions_converter = ReactionsConverter("xrefs_files/ModelSEED-reactions.csv")
+        self.reference_model_format = reference_model_format
+        self.conversion_method = conversion_method
+
+        if self.conversion_method == "modelseed":
+            self.reactions_converter = ReactionsConverter("xrefs_files/ModelSEED-reactions.csv")
+        else:
+            self.reactions_converter = ReactionsConverter("xrefs_files/MetaNetX-reactions.csv")
+
         self.reference_reaction_sets = self.convert_reference_model_with_ModelSEED_converter()
         self.general_reference_reaction_set = []
 
@@ -106,13 +113,14 @@ class ReactionsAssessor:
         reactions_to_convert = ReactionsAssessor.get_reactions_to_convert(self.reference_model)
 
         self.reference_model.reaction_converter = self.reactions_converter
-        ModelSEED_report = self.reference_model.get_reactions_other_version(database="modelseed",
+        ModelSEED_report = self.reference_model.get_reactions_other_version(database=self.reference_model_format,
                                                                             reactions=reactions_to_convert,
                                                                             preprocess_ids=True)
         ModelSEED_convertable_reactions = ModelSEED_report.convertable
 
         print("Tool: " + str(self.reference_model.reconstruction_tool))
         print("Total number of reactions: " + str(len(self.reference_model.model.reactions)))
+        print("Removed reactions: " + str(len(self.reference_model.model.reactions) - len(reactions_to_convert)))
 
         print("Reactions converted with ModelSEED: " + str(len(ModelSEED_convertable_reactions.keys())))
         print("Reactions not converted with ModelSEED: " + str(len(ModelSEED_report.non_convertable)))
@@ -137,7 +145,7 @@ class ReactionsAssessor:
         # reactions_to_convert = [reaction.id for reaction in model.model.reactions]
 
         model.reaction_converter = self.reactions_converter
-        ModelSEED_report = model.get_reactions_other_version(database="modelseed",
+        ModelSEED_report = model.get_reactions_other_version(database=self.reference_model_format,
                                                              reactions=reactions_to_convert,
                                                              preprocess_ids=True)
         ModelSEED_convertable_reactions = ModelSEED_report.convertable
@@ -280,10 +288,20 @@ class ReactionsAssessor:
     def get_f1_score(recall, precision):
         return 2 * (recall * precision) / (recall + precision)
 
+    @staticmethod
+    def get_coverage_additional_information_ratio(true_positive, false_positive):
+        return true_positive / false_positive
+
+    @staticmethod
+    def get_jaccard_distance(true_positive, false_positive, false_negative):
+        return 1 - (true_positive / (true_positive + false_positive + false_negative))
+
 
 class ResultsReport:
 
-    def __init__(self, reference_model: Model, models_to_be_assessed: Dict[str, Model]):
+    def __init__(self, reference_model: Model, models_to_be_assessed: Dict[str, Model],
+                 reference_model_format: str,
+                 conversion_method: str):
 
         if reference_model.reconstruction_tool == ReconstructionTool.T_GONDII_CURATED.value:
             reactions = [reaction.id for reaction in reference_model.model.reactions]
@@ -294,9 +312,10 @@ class ResultsReport:
 
             reference_model.model.genes = genes
 
-        self.model_assessor = ReactionsAssessor(reference_model)
+        self.model_assessor = ReactionsAssessor(reference_model,
+                                                reference_model_format=reference_model_format,
+                                                conversion_method=conversion_method)
         self.models_to_be_assessed = models_to_be_assessed
-
 
     def generate_reactions_report(self, file_path):
 
@@ -311,15 +330,23 @@ class ResultsReport:
             precision = self.model_assessor.get_precision(true_positives, false_positives)
             recall = self.model_assessor.get_recall(true_positives, false_negatives)
             f1_score = self.model_assessor.get_f1_score(recall, precision)
+            ratio = self.model_assessor.get_coverage_additional_information_ratio(true_positives, false_positives)
+            jaccard_distance = self.model_assessor.get_jaccard_distance(true_positives, false_positives,
+                                                                        false_negatives)
 
             report_df.at[i, "model"] = model
             report_df.at[i, "reactions number"] = models_info[model]["reactions number"]
             report_df.at[i, "removed reactions"] = models_info[model]["removed reactions"]
             report_df.at[i, "converted reactions"] = models_info[model]["converted reactions"]
             report_df.at[i, "non-converted reactions"] = models_info[model]["non-converted reactions"]
+            report_df.at[i, "true positives"] = true_positives
+            report_df.at[i, "false positives"] = false_positives
+            report_df.at[i, "false negatives"] = false_negatives
             report_df.at[i, "recall"] = recall
             report_df.at[i, "precision"] = precision
             report_df.at[i, "f1"] = f1_score
+            report_df.at[i, "ratio"] = ratio
+            report_df.at[i, "jaccard distance"] = jaccard_distance
 
         report_df.to_csv(file_path, index=False)
 
@@ -335,12 +362,20 @@ class ResultsReport:
             precision = self.model_assessor.get_precision(true_positives, false_positives)
             recall = self.model_assessor.get_recall(true_positives, false_negatives)
             f1_score = self.model_assessor.get_f1_score(recall, precision)
+            ratio = self.model_assessor.get_coverage_additional_information_ratio(true_positives, false_positives)
+            jaccard_distance = self.model_assessor.get_jaccard_distance(true_positives, false_positives,
+                                                                        false_negatives)
 
             report_df.at[i, "model"] = model
             report_df.at[i, "genes number"] = len(genes)
+            report_df.at[i, "true positives"] = true_positives
+            report_df.at[i, "false positives"] = false_positives
+            report_df.at[i, "false negatives"] = false_negatives
             report_df.at[i, "recall"] = recall
             report_df.at[i, "precision"] = precision
             report_df.at[i, "f1"] = f1_score
+            report_df.at[i, "ratio"] = ratio
+            report_df.at[i, "jaccard distance"] = jaccard_distance
 
         report_df.to_csv(file_path, index=False)
 
