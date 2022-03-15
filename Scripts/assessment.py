@@ -303,14 +303,16 @@ class ResultsReport:
                  reference_model_format: str,
                  conversion_method: str):
 
-        if reference_model.reconstruction_tool == ReconstructionTool.T_GONDII_CURATED.value:
+        self.reference_model = reference_model
+
+        if self.reference_model.reconstruction_tool == ReconstructionTool.T_GONDII_CURATED.value:
             reactions = [reaction.id for reaction in reference_model.model.reactions]
             genes = []
             for reaction in reactions:
                 genes_in_reaction = [x.group() for x in re.finditer("TGME[0-9]+_[0-9]+", reaction)]
                 genes.extend(genes_in_reaction)
 
-            reference_model.model.genes = genes
+            self.reference_model.model.genes = genes
 
         self.model_assessor = ReactionsAssessor(reference_model,
                                                 reference_model_format=reference_model_format,
