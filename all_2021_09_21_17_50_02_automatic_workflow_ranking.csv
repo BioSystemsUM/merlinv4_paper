@@ -1,9 +1,0 @@
-species,Pseudomonas putida,1.0E-30,true
-genus,Pseudomonas,1.0E-30,true
-species,Escherichia coli,1.0E-30,true
-species,Klebsiella pneumoniae,1.0E-30,true
-species,Mycobacterium tuberculosis (strain ATCC 25177 / H37Ra),1.0E-30,true
-species,any,1.0E-30,true
-species,Pseudomonas putida,1.0E-30,false
-genus,Pseudomonas,1.0E-30,false
-species,Escherichia coli,1.0E-30,false
