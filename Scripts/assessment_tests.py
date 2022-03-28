@@ -1,6 +1,5 @@
 from unittest import TestCase
 
-from Scripts.assessment import ReactionsAssessor
 from Scripts.core import read_sbml_into_cobra_model
 from Scripts.utils import ReconstructionTool
 from Scripts.assessment import ResultsReport

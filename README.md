@@ -26,6 +26,13 @@
 
 ## Requirements
 
+- pip install matplotlib
+- pip install biopython
+- pip install seaborn
+- pip install json
+- pip install cobra
+- pip install pandas
+
 ## Sequences
 
 The gene sequences used to reconstruct each of the Genome-Scale Metabolic Models (GSMM) are stored in the folder "Sequences".
