@@ -25,9 +25,9 @@ class ReactionsAssessor:
         self.conversion_method = conversion_method
 
         if self.conversion_method == "modelseed":
-            self.reactions_converter = ReactionsConverter("xrefs_files/ModelSEED-reactions.csv")
+            self.reactions_converter = ReactionsConverter("Xrefs files/ModelSEED-reactions.csv")
         else:
-            self.reactions_converter = ReactionsConverter("xrefs_files/MetaNetX-reactions.csv")
+            self.reactions_converter = ReactionsConverter("Xrefs files/MetaNetX-reactions.csv")
 
         self.reference_reaction_sets = self.convert_reference_model_with_ModelSEED_converter()
         self.general_reference_reaction_set = []
@@ -193,7 +193,7 @@ class ReactionsAssessor:
             reaction_sets[model_name] = reaction_set
 
             # ModelSEED_non_convertable_reactions = ModelSEED_report.non_convertable
-            # MetaNetX_reactions_converter = ReactionsConverter("xrefs_files/MetaNetX-reactions.csv")
+            # MetaNetX_reactions_converter = ReactionsConverter("Xrefs files/MetaNetX-reactions.csv")
             # model.reaction_converter = MetaNetX_reactions_converter
             # MetaNetX_report = model.get_reactions_other_version(database="metanetx",
             #                                                     reactions=ModelSEED_non_convertable_reactions,
