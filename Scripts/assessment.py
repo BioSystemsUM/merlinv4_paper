@@ -29,7 +29,7 @@ class ReactionsAssessor:
         else:
             self.reactions_converter = ReactionsConverter("Xrefs files/MetaNetX-reactions.csv")
 
-        self.reference_reaction_sets = self.convert_reference_model_with_ModelSEED_converter()
+        self.reference_reaction_sets = self.convert_reference_model_with_converter()
         self.general_reference_reaction_set = []
 
         for reactions in list(self.reference_reaction_sets.values()):
@@ -41,7 +41,7 @@ class ReactionsAssessor:
 
     @staticmethod
     def get_reactions_to_convert(model):
-
+        reactions_not_to_convert = []
         all_reactions = model.model.reactions
         reactions_to_convert = []
 
@@ -105,10 +105,13 @@ class ReactionsAssessor:
 
             if add:
                 reactions_to_convert.append(reaction_id)
-
+            else:
+                reactions_not_to_convert.append(reaction_id)
+        with open("not_converted_reactions.txt", "w") as f:
+            f.write(str(reactions_not_to_convert))
         return reactions_to_convert
 
-    def convert_reference_model_with_ModelSEED_converter(self):
+    def convert_reference_model_with_converter(self):
         reaction_sets = {}
         reactions_to_convert = ReactionsAssessor.get_reactions_to_convert(self.reference_model)
 
@@ -122,8 +125,8 @@ class ReactionsAssessor:
         print("Total number of reactions: " + str(len(self.reference_model.model.reactions)))
         print("Removed reactions: " + str(len(self.reference_model.model.reactions) - len(reactions_to_convert)))
 
-        print("Reactions converted with ModelSEED: " + str(len(ModelSEED_convertable_reactions.keys())))
-        print("Reactions not converted with ModelSEED: " + str(len(ModelSEED_report.non_convertable)))
+        print("Reactions converted: " + str(len(ModelSEED_convertable_reactions.keys())))
+        print("Reactions not converted: " + str(len(ModelSEED_report.non_convertable)))
 
         for convertable_reaction in ModelSEED_convertable_reactions:
             converted_reactions = ModelSEED_convertable_reactions[convertable_reaction]
@@ -137,7 +140,7 @@ class ReactionsAssessor:
 
         return reaction_sets
 
-    def convert_model_reactions_with_ModelSEED_converter(self, model):
+    def convert_model_reactions_with_converter(self, model):
         reaction_set = []
         model_info = {}
 
@@ -158,8 +161,8 @@ class ReactionsAssessor:
         model_info["converted reactions"] = len(ModelSEED_convertable_reactions.keys())
         model_info["non-converted reactions"] = len(ModelSEED_report.non_convertable)
 
-        print("Reactions converted with ModelSEED: " + str(len(ModelSEED_convertable_reactions.keys())))
-        print("Reactions not converted with ModelSEED: " + str(len(ModelSEED_report.non_convertable)))
+        print("Reactions converted: " + str(len(ModelSEED_convertable_reactions.keys())))
+        print("Reactions not converted: " + str(len(ModelSEED_report.non_convertable)))
 
         for convertable_reaction in ModelSEED_convertable_reactions:
             converted_reactions = ModelSEED_convertable_reactions[convertable_reaction]
@@ -181,6 +184,8 @@ class ReactionsAssessor:
                     if converted_reaction not in reaction_set:
                         reaction_set.append(str(converted_reaction).upper())
 
+        duplicated = len(ModelSEED_convertable_reactions.keys()) - len(set(reaction_set))
+        model_info["duplicated reactions"] = duplicated
         return set(reaction_set), model_info
 
     def convert_reactions(self, models):
@@ -188,41 +193,9 @@ class ReactionsAssessor:
         models_info = {}
 
         for model_name in models.keys():
-            reaction_set, model_info = self.convert_model_reactions_with_ModelSEED_converter(models[model_name])
+            reaction_set, model_info = self.convert_model_reactions_with_converter(models[model_name])
             models_info[model_name] = model_info
             reaction_sets[model_name] = reaction_set
-
-            # ModelSEED_non_convertable_reactions = ModelSEED_report.non_convertable
-            # MetaNetX_reactions_converter = ReactionsConverter("Xrefs files/MetaNetX-reactions.csv")
-            # model.reaction_converter = MetaNetX_reactions_converter
-            # MetaNetX_report = model.get_reactions_other_version(database="metanetx",
-            #                                                     reactions=ModelSEED_non_convertable_reactions,
-            #                                                     preprocess_ids=False)
-            # MetaNetX_convertable_reactions = MetaNetX_report.convertable
-            #
-            # print("Reactions converted with MetaNetX: " + str(len(MetaNetX_convertable_reactions.keys())))
-            # print("Reactions not converted with MetaNetX: " + str(len(MetaNetX_report.non_convertable)))
-            # print(MetaNetX_report.non_convertable)
-            # print()
-            #
-            # for convertable_reaction in MetaNetX_convertable_reactions:
-            #     converted_reactions = MetaNetX_convertable_reactions[convertable_reaction]
-            #
-            #     if len(converted_reactions) > 1:
-            #         dic = {}
-            #         for converted_reaction in converted_reactions:
-            #             dic[converted_reaction] = 0
-            #             for model in reaction_sets.keys():
-            #                 if converted_reaction in reaction_sets[model]:
-            #                     dic[converted_reaction] = int(dic[converted_reaction]) + 1
-            #
-            #         dic = dict(sorted(dic.items(), key=lambda item: item[1]))
-            #         reaction_set.append((str(list(dic.keys())[-1])).upper())
-            #     else:
-            #         for converted_reaction in converted_reactions:
-            #             if converted_reaction not in reaction_set:
-            #                 reaction_set.append(str(converted_reaction).upper())
-            #
 
         return reaction_sets, models_info
 
@@ -341,6 +314,7 @@ class ResultsReport:
             report_df.at[i, "removed reactions"] = models_info[model]["removed reactions"]
             report_df.at[i, "converted reactions"] = models_info[model]["converted reactions"]
             report_df.at[i, "non-converted reactions"] = models_info[model]["non-converted reactions"]
+            report_df.at[i, "duplicated reactions"] = models_info[model]["duplicated reactions"]
             report_df.at[i, "true positives"] = true_positives
             report_df.at[i, "false positives"] = false_positives
             report_df.at[i, "false negatives"] = false_negatives

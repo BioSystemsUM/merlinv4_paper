@@ -16,7 +16,7 @@ class TestAssessment(TestCase):
                                            database_version="bigg", reconstruction_tool="curated")
 
         models_to_assess = {"model_seed": model2_model_seed}
-        report = ResultsReport(model, models_to_assess)
+        report = ResultsReport(model, models_to_assess, conversion_method="metanetx", reference_model_format="bigg")
         report.generate_reactions_report("coiso.csv")
 
 
@@ -128,3 +128,19 @@ class TestAssessment(TestCase):
         report = ResultsReport(model, models_to_assess)
 
         report.generate_genes_report("results/Tgondii_genes_results.csv")
+
+    def test_tgondii_reactions(self):
+        model = read_sbml_into_cobra_model(file_path="../Models/Manually_curated/Tgondii.xml",
+                                           database_version="kegg",
+                                           reconstruction_tool=ReconstructionTool.T_GONDII_CURATED.value)
+
+        model2_model_seed = read_sbml_into_cobra_model(file_path="../Models/ModelSEED/Tgondii.xml",
+                                                       database_version="modelseed",
+                                                       reconstruction_tool=ReconstructionTool.MODELSEED.value)
+
+
+        models_to_assess = {"model_seed": model2_model_seed}
+
+        print("Number of genes: ", len(model.model.genes))
+        report_metanetx_all = ResultsReport(model, models_to_assess, conversion_method="metanetx",
+                                            reference_model_format="kegg")
