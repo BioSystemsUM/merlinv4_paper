@@ -107,8 +107,6 @@ class ReactionsAssessor:
                 reactions_to_convert.append(reaction_id)
             else:
                 reactions_not_to_convert.append(reaction_id)
-        with open("not_converted_reactions.txt", "w") as f:
-            f.write(str(reactions_not_to_convert))
         return reactions_to_convert
 
     def convert_reference_model_with_converter(self):
