@@ -1,1 +1,0 @@
-(Cvulgaris_maker_Scaffold_44-snap-gene-0.206-mRNA-1 protein AED_0.16 eAED_0.20 QI_0|0.5|0.33|1|0.5|0.66|3|0|166:0.556754,((creidhartii_CRv4_Au5_s12_g3528_t2:0.0316263,creidhartii_CRv4_Au5_s12_g3528_t1:0.0827617)n2:0.441275,creidhartii_CRv4_Au5_s8_g14633_t1:0.567658)n1:0.556754)n0;

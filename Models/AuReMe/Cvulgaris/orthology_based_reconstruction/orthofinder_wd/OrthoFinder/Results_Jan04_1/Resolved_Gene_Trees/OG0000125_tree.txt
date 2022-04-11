@@ -1,1 +1,0 @@
-((creidhartii_CRv4_Au5_s12_g3330_t2:0.0226035,creidhartii_CRv4_Au5_s12_g3330_t1:0.0533545)n1:0.588973,(Cvulgaris_genemark_Scaffold_371-abinit-gene-0.43-mRNA-1 protein AED_0.06 eAED_0.08 QI_0|0.71|0.5|0.87|1|1|8|0|468:1.29456,Cvulgaris_genemark_Scaffold_214-abinit-gene-0.45-mRNA-1 protein AED_0.30 eAED_0.30 QI_0|0.66|0|1|1|1|4|0|644:1.24987)n2:0.588973)n0;

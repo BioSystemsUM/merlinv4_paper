@@ -1,1 +1,0 @@
-(Cvulgaris_augustus_masked_Scaffold_1410-abinit-gene-0.4-mRNA-1 protein AED_0.30 eAED_0.30 QI_0|0.33|0|0.5|1|1|4|0|133:0.182598,(creidhartii_CRv4_Au5_s11_g2658_t1:0.249175,(creidhartii_CRv4_Au5_s11_g2652_t1:0.447779,creidhartii_CRv4_Au5_s11_g2651_t1:0.271759)n2:0.0623885)n1:0.182598)n0;

@@ -1,1 +1,0 @@
-((creidhartii_CRv4_Au5_s13_g5045_t1:1.02279,creidhartii_CRv4_Au5_s3_g11246_t1:0.389784):0.441995,creidhartii_CRv4_Au5_s3_g11192_t2:0.0359329,creidhartii_CRv4_Au5_s3_g11192_t1:1.88194e-06);
