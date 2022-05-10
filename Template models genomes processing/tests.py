@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 
-from analysis_scripts.utils import FileUtils
+from utils import FileUtils
 
 
 class TestFileUtils(TestCase):
