@@ -144,7 +144,7 @@ The *SamPler* parameters are stored in the "Sampler Parameters" folder.
 
 ### Workspaces
 
-All the workspaces are available [here](https://nextcloud.bio.di.uminho.pt/s/cqkdC6c642dScGM).
+All the workspaces are available [here](https://nextcloud.bio.di.uminho.pt/s/M5w68BApygPQRfF).
 
 ## Reactions identifier conversion
 
