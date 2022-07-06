@@ -1,4 +1,6 @@
-# Merlin paper
+# merlin, an improved framework for the reconstruction of high-quality genome-scale metabolic models
+
+[![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.18914.svg)](https://doi.org/10.1093/nar/gkac459)
 
 ### Table of contents:
 
